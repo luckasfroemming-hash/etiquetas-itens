@@ -1,0 +1,676 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light}body{margin:0}[hidden]{display:none!important}</style>
+<title>Itens nas Etiquetas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: coluna única de 52rem. Arquivos entram no topo, o resultado (pedidos casados + download) aparece logo abaixo.
+   Visual de bancada de expedição: tinta azul-grafite, papel de etiqueta branco, mono para SKU e ZPL. */
+:root {
+  --bg: #ECEEF1; --surface: #FFFFFF; --ink: #12171F; --ink-2: #4A5463; --line: #D5DAE1;
+  --accent: #1F4FD8; --accent-ink: #FFFFFF; --accent-soft: #E4EBFB;
+  --ok: #17794A; --ok-bg: #E1F2E9; --warn: #86570A; --warn-bg: #FAEFD3; --bad: #B3261E; --bad-bg: #FADFDC;
+  --code-bg: #F3F5F8; --paper: #FFFFFF; --paper-ink: #11151B; --paper-line: #C9CFD8;
+  --font-ui: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-head: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E1218; --surface: #171C24; --ink: #E8ECF2; --ink-2: #A3ADBC; --line: #2A323E;
+    --accent: #7DA2FF; --accent-ink: #0B1220; --accent-soft: #1A2740;
+    --ok: #5ED39A; --ok-bg: #12301F; --warn: #E8B64D; --warn-bg: #33280F; --bad: #FF8A80; --bad-bg: #3A1814;
+    --code-bg: #11161D; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E1218; --surface: #171C24; --ink: #E8ECF2; --ink-2: #A3ADBC; --line: #2A323E;
+  --accent: #7DA2FF; --accent-ink: #0B1220; --accent-soft: #1A2740;
+  --ok: #5ED39A; --ok-bg: #12301F; --warn: #E8B64D; --warn-bg: #33280F; --bad: #FF8A80; --bad-bg: #3A1814;
+  --code-bg: #11161D; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.5;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 28px 56px;
+}
+.wrap { max-width: 52rem; margin-inline: auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-family: var(--font-head); font-weight: 600; font-size: clamp(1.7rem, 4.5vw, 2.2rem); line-height: 1.1; margin: 0 0 8px; letter-spacing: -0.01em; text-wrap: balance; }
+h2 { font-family: var(--font-head); font-weight: 600; font-size: 1.15rem; margin: 0; }
+p { margin: 0; }
+.lede { color: var(--ink-2); max-width: 62ch; }
+.mono { font-family: var(--font-mono); }
+.muted { color: var(--ink-2); }
+.small { font-size: 0.82rem; }
+
+.drop {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center;
+  background: var(--surface); border: 2px dashed var(--line); border-radius: 10px; padding: 22px; cursor: pointer;
+  transition: border-color .15s, background-color .15s;
+}
+.drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+.drop:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.drop svg { width: 54px; height: 54px; color: var(--accent); }
+.drop strong { display: block; font-size: 1.05rem; }
+.drop input { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; }
+.btn {
+  appearance: none; font: inherit; font-weight: 600; border-radius: 8px; padding: 10px 16px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink);
+}
+.btn:hover { border-color: var(--accent); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.quiet { padding: 6px 10px; font-weight: 500; font-size: 0.85rem; }
+
+.files { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 4px 12px 4px 6px; font-size: 0.85rem; }
+.chip b { font-weight: 600; font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 2px 8px; }
+.chip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+
+.msg { border-radius: 8px; padding: 10px 14px; font-size: 0.92rem; }
+.msg.bad { background: var(--bad-bg); color: var(--bad); }
+.msg.warn { background: var(--warn-bg); color: var(--warn); }
+.msg.ok { background: var(--ok-bg); color: var(--ok); }
+
+details.opts { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+details.opts summary { cursor: pointer; font-weight: 600; }
+.opts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 14px 20px; margin-top: 14px; }
+.opts label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; color: var(--ink-2); }
+.opts label.check { flex-direction: row; align-items: center; gap: 8px; color: var(--ink); font-size: 0.92rem; }
+.opts select, .opts input[type="number"] {
+  font: inherit; color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 7px 10px; width: 100%;
+}
+.opts p { margin-top: 12px; }
+
+.result { display: flex; flex-direction: column; gap: 14px; }
+.result-head { display: flex; flex-wrap: wrap; gap: 12px 16px; justify-content: space-between; align-items: center; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.orders { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+.order { display: grid; grid-template-columns: 2.2rem 5.2rem minmax(0, 1fr); gap: 4px 12px; padding: 14px 16px; border-top: 1px solid var(--line); }
+.order:first-child { border-top: 0; }
+.order .n { font-family: var(--font-mono); color: var(--ink-2); }
+.order .nf { font-family: var(--font-mono); font-weight: 500; }
+.order .who { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.order .who b { font-weight: 600; overflow-wrap: anywhere; }
+.order .meta { grid-column: 3; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.strip { background: var(--paper); color: var(--paper-ink); border: 1px solid var(--paper-line); border-radius: 4px; padding: 8px 10px; font-family: var(--font-mono); font-size: 0.78rem; line-height: 1.45; overflow-wrap: anywhere; }
+.strip div + div { margin-top: 2px; }
+.pill { display: inline-block; align-self: flex-start; font-size: 0.78rem; font-weight: 600; border-radius: 999px; padding: 2px 10px; }
+.pill.ok { background: var(--ok-bg); color: var(--ok); }
+.pill.warn { background: var(--warn-bg); color: var(--warn); }
+.pill.bad { background: var(--bad-bg); color: var(--bad); }
+
+.how { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 16px; }
+.how > div { min-width: 0; }
+.how h2 { margin-bottom: 6px; }
+.sample { margin-top: 10px; }
+.sample .cap { margin-bottom: 6px; }
+.note { border-top: 1px solid var(--line); padding-top: 14px; }
+
+@media (max-width: 560px) {
+  .drop { grid-template-columns: 1fr; justify-items: start; }
+  .order { grid-template-columns: 2rem minmax(0, 1fr); }
+  .order .nf { grid-column: 2; }
+  .order .who, .order .meta { grid-column: 1 / -1; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+</head>
+<body>
+<script>window.__STANDALONE__=true;</script>
+<main class="wrap">
+  <header>
+    <h1>Itens nas etiquetas</h1>
+    <p class="lede">Suba o .zip baixado do Mercado Livre, ou o .txt da etiqueta e o Controle.pdf. Cada DANFE ganha, em letras pequenas no rodapé, o SKU, a quantidade e o título do item daquele pedido. O resto da etiqueta não muda.</p>
+  </header>
+
+  <label class="drop" id="drop" for="f-in">
+    <svg viewBox="0 0 54 54" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <rect x="7" y="5" width="40" height="44" rx="4"/>
+      <path d="M14 14h26M14 20h14"/>
+      <path d="M14 33v8M18 33v8M22 33v8M27 33v8M31 33v8M36 33v8M40 33v8" stroke-width="2"/>
+    </svg>
+    <div>
+      <strong>Solte os arquivos aqui ou clique para escolher</strong>
+      <span class="muted">Aceito .zip (com o .txt e o PDF dentro) ou os dois arquivos soltos, juntos ou um de cada vez.</span>
+    </div>
+    <input id="f-in" type="file" multiple accept=".zip,.txt,.zpl,.prn,.pdf,application/zip,application/pdf,text/plain">
+  </label>
+
+  <div id="files" class="files" hidden></div>
+  <div id="msg" class="msg" role="status" aria-live="polite" hidden></div>
+
+  <details class="opts" id="opts">
+    <summary>Ajustes do texto</summary>
+    <div class="opts-grid">
+      <label for="o-font">Tamanho da letra
+        <select id="o-font"><option value="14">14 (bem pequena)</option><option value="16" selected>16</option><option value="18">18</option><option value="20">20</option></select>
+      </label>
+      <label for="o-top">Início do texto (y)
+        <input id="o-top" type="number" min="1000" max="1190" step="2" value="1140">
+      </label>
+      <label for="o-bottom">Fim máximo do texto (y)
+        <input id="o-bottom" type="number" min="1100" max="1400" step="2" value="1196">
+      </label>
+      <label class="check" for="o-title"><input id="o-title" type="checkbox" checked> Mostrar o título do anúncio</label>
+      <label class="check" for="o-attrs"><input id="o-attrs" type="checkbox" checked> Mostrar variação (cor, tamanho)</label>
+    </div>
+    <p class="small muted">Se o texto sair cortado embaixo, diminua o fim máximo. Com vários itens no mesmo pedido, o bloco sobe para caber.</p>
+  </details>
+
+  <section id="result" class="result" hidden aria-label="Resultado"></section>
+
+  <section id="intro" class="how">
+    <div>
+      <h2>Como funciona</h2>
+      <p class="muted">A página lê o Controle.pdf, acha cada pedido pelo número da venda ou do pacote que está impresso na etiqueta do ML e escreve o item no DANFE que vem logo depois dela. Tudo roda neste navegador, nenhum arquivo é enviado para fora.</p>
+    </div>
+    <div>
+      <h2>O que sai no rodapé</h2>
+      <div class="sample">
+        <p class="muted small cap">Exemplo</p>
+        <div class="strip"><div>ITEM: ROLDANALUCASAPORTA | Qtd: 2</div><div>Roldana Porta De Correr Ferro Lucasa Original Janela Modelo Porta - 38mm</div></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+<script>
+/* core.js — lógica sem DOM: lê o Controle.pdf (itens por venda) e acrescenta o item no DANFE de cada pedido do ZPL */
+(function (root) {
+  'use strict';
+
+  /* ---------- utilidades de bytes (preserva o arquivo byte a byte) ---------- */
+  function bytesToBin(u8) {
+    let s = '';
+    for (let i = 0; i < u8.length; i += 8192) s += String.fromCharCode.apply(null, u8.subarray(i, i + 8192));
+    return s;
+  }
+  function binToBytes(s) {
+    const u8 = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) u8[i] = s.charCodeAt(i) & 255;
+    return u8;
+  }
+  function decodeFH(s) { // "_C3_A3" -> "ã"
+    return s.replace(/(?:_[0-9A-Fa-f]{2})+/g, function (m) {
+      const b = m.match(/[0-9A-Fa-f]{2}/g).map(function (h) { return parseInt(h, 16); });
+      try { return new TextDecoder('utf-8', { fatal: true }).decode(new Uint8Array(b)); }
+      catch (e) { return String.fromCharCode.apply(null, b); }
+    });
+  }
+  function encodeFH(s) { // texto seguro para campos ^FH (indicador "_")
+    const bytes = new TextEncoder().encode(s);
+    let out = '';
+    for (const b of bytes) {
+      const ch = String.fromCharCode(b);
+      if (b < 0x20 || b > 0x7e || '_^~\\'.indexOf(ch) >= 0) out += '_' + b.toString(16).toUpperCase().padStart(2, '0');
+      else out += ch;
+    }
+    return out;
+  }
+
+  /* ---------- PDF de controle ---------- */
+  function groupLines(items, tol) {
+    const sorted = items.filter(function (i) { return i.str.trim(); })
+      .sort(function (a, b) { return (b.y - a.y) || (a.x - b.x); });
+    const lines = [];
+    for (const it of sorted) {
+      const last = lines[lines.length - 1];
+      if (last && Math.abs(last.y - it.y) <= tol) last.items.push(it);
+      else lines.push({ y: it.y, items: [it] });
+    }
+    for (const l of lines) {
+      l.items.sort(function (a, b) { return a.x - b.x; });
+      l.text = l.items.map(function (i) { return i.str.trim(); }).join(' ').replace(/\s+/g, ' ').trim();
+    }
+    return lines;
+  }
+
+  function cleanTitle(t) {
+    return t.replace(/Cfiw/g, 'Cfw').replace(/\s+/g, ' ').trim(); // o PDF extrai "Cfw" como "Cfiw"
+  }
+
+  function parseItems(lines) {
+    const items = []; let title = []; let cur = null; let prevY = null;
+    for (const l of lines) {
+      const t = l.text; let m;
+      const gap = prevY == null ? 0 : prevY - l.y;
+      if ((m = t.match(/^SKU:\s*(.*)$/i))) {
+        cur = { title: cleanTitle(title.join(' ')), sku: m[1].trim(), qty: null, attrs: [] };
+        items.push(cur); title = [];
+      } else if (cur && (m = t.match(/^Quantidade:\s*(\d+)/i))) {
+        cur.qty = parseInt(m[1], 10);
+      } else if (cur && gap <= 12.5 && /^[^:]{1,40}:\s*\S/.test(t)) {
+        cur.attrs.push(t);
+      } else {
+        title.push(t);
+      }
+      prevY = l.y;
+    }
+    return items;
+  }
+
+  function parsePdfPage(rawItems) {
+    const skuItem = rawItems.find(function (i) { return i.str.trim() === 'SKU:'; });
+    if (!skuItem) return [];
+    const split = skuItem.x - 25;
+    const left = groupLines(rawItems.filter(function (i) { return i.x < split; }), 1.8);
+    const right = groupLines(rawItems.filter(function (i) { return i.x >= split; }), 1.8);
+    const isMeta = function (t) { return /^(Pack ID|Venda):/i.test(t); };
+    const blocks = [];
+    for (let i = 0; i < left.length; i++) {
+      const t = left[i].text;
+      if (isMeta(t) || !(i + 1 < left.length && isMeta(left[i + 1].text))) continue;
+      const b = { id: t, y: left[i].y, pack: null, vendas: [], name: '', items: [] };
+      let j = i + 1;
+      while (j < left.length && isMeta(left[j].text)) {
+        const m = left[j].text.match(/^(Pack ID|Venda):\s*(\d+)/i);
+        if (m) { if (/pack/i.test(m[1])) b.pack = m[2]; else b.vendas.push(m[2]); }
+        j++;
+      }
+      if (j < left.length && !(j + 1 < left.length && isMeta(left[j + 1].text))) b.name = left[j].text;
+      blocks.push(b);
+    }
+    const buckets = blocks.map(function () { return []; });
+    for (const l of right) {
+      let k = -1;
+      for (let i = 0; i < blocks.length; i++) if (blocks[i].y + 3 >= l.y) k = i;
+      if (k >= 0) buckets[k].push(l);
+    }
+    blocks.forEach(function (b, i) { b.items = parseItems(buckets[i]); });
+    return blocks;
+  }
+
+  async function extractPdf(pdfjsLib, u8) {
+    const doc = await pdfjsLib.getDocument({ data: u8 }).promise;
+    const all = [];
+    for (let p = 1; p <= doc.numPages; p++) {
+      const page = await doc.getPage(p);
+      const tc = await page.getTextContent();
+      const items = tc.items.map(function (i) { return { str: i.str, x: i.transform[4], y: i.transform[5] }; });
+      all.push.apply(all, parsePdfPage(items));
+    }
+    return all;
+  }
+
+  /* ---------- ZPL ---------- */
+  function classify(f) {
+    if (/DANFE SIMPLIFICADO/.test(f)) return 'danfe';
+    if (/Shipment_Number_Bar_Code|\^FX\s+Logo_Meli/.test(f)) return 'ml';
+    return 'other';
+  }
+
+  function mlKey(f) { // Venda ou Pack ID impressos na etiqueta do ML
+    const m = f.match(/\^FD(Venda|Pack ID):\s*(\d+)\^FS([^\n]*\n\s*\^FO[^\n]*?\^FD(\d+)\^FS)?/);
+    if (!m) return null;
+    return { kind: /pack/i.test(m[1]) ? 'pack' : 'venda', key: m[2] + (m[4] || '') };
+  }
+
+  function buildBlock(items, o) {
+    const W = 740, f = o.font, lh = f + 4, cpl = Math.floor(W / (f * 0.6));
+    const parts = [];
+    function push(text) {
+      let lines = Math.ceil(text.length / cpl);
+      if (lines > 2) { text = text.slice(0, cpl * 2 - 3) + '...'; lines = 2; }
+      parts.push({ text: text, lines: Math.max(1, lines) });
+    }
+    for (const it of items) {
+      let head = 'ITEM: ' + it.sku;
+      if (it.qty != null) head += ' | Qtd: ' + it.qty;
+      if (o.showAttrs) for (const a of it.attrs) head += ' | ' + a;
+      push(head);
+      if (o.showTitle && it.title) push(it.title);
+    }
+    const H = parts.reduce(function (s, p) { return s + p.lines * lh; }, 0);
+    let y = Math.max(Math.min(o.top, o.bottom - H), 1050);
+    const lines = ['^FX ITENS_DO_PEDIDO ^FS'];
+    for (const p of parts) {
+      lines.push('^FO40,' + y + '^A0N,' + f + ',' + f + '^FB' + W + ',2,4,L^FH^FD' + encodeFH(p.text) + '^FS');
+      y += p.lines * lh;
+    }
+    return { lines: lines, text: parts.map(function (p) { return p.text; }) };
+  }
+
+  function processZpl(zpl, pdfBlocks, opts) {
+    const o = Object.assign({ font: 16, top: 1140, bottom: 1196, showTitle: true, showAttrs: true }, opts || {});
+    const eol = zpl.indexOf('\r\n') >= 0 ? '\r\n' : '\n';
+    const re = /\^XA[\s\S]*?\^XZ/g;
+    const fmts = []; let m;
+    while ((m = re.exec(zpl))) fmts.push({ start: m.index, end: m.index + m[0].length, text: m[0], type: classify(m[0]) });
+
+    const rows = []; const replace = {};
+    for (let i = 0; i < fmts.length; i++) {
+      if (fmts[i].type !== 'ml') continue;
+      const k = mlKey(fmts[i].text);
+      const next = fmts[i + 1];
+      const danfe = next && next.type === 'danfe' ? next : null;
+      const row = { n: rows.length + 1, key: k ? k.key : null, kind: k ? k.kind : null, status: '', items: [], texts: [], nf: '', buyer: '', danfeName: '' };
+      if (danfe) {
+        const nf = danfe.text.match(/\^FDN_c3_bamero\s+([\d,.]+)\/Serie/i);
+        if (nf) row.nf = nf[1].replace(/[.,]/g, '');
+        const dn = danfe.text.match(/\^FDDESTINATARIO:\s*([^\^]+)\^FS/);
+        if (dn) row.danfeName = decodeFH(dn[1]).trim();
+      }
+      let found = [];
+      if (k) found = pdfBlocks.filter(function (b) { return k.kind === 'pack' ? b.pack === k.key : b.vendas.indexOf(k.key) >= 0; });
+      row.buyer = found.length ? found[0].name : '';
+      for (const b of found) row.items.push.apply(row.items, b.items);
+      if (!k) row.status = 'sem_chave';
+      else if (!found.length || !row.items.length) row.status = 'sem_pdf';
+      else if (!danfe) row.status = 'sem_danfe';
+      else if (danfe.text.indexOf('ITENS_DO_PEDIDO') >= 0) row.status = 'ja_tem';
+      else {
+        const blk = buildBlock(row.items, o);
+        row.texts = blk.text;
+        const idx = danfe.text.lastIndexOf('^XZ');
+        let head = danfe.text.slice(0, idx);
+        if (!/[\r\n]$/.test(head)) head += eol;
+        replace[i + 1] = head + blk.lines.map(function (l) { return l + eol; }).join('') + '^XZ';
+        row.status = 'ok';
+      }
+      rows.push(row);
+    }
+    let out = ''; let last = 0;
+    fmts.forEach(function (f, i) {
+      out += zpl.slice(last, f.start) + (replace[i] !== undefined ? replace[i] : f.text);
+      last = f.end;
+    });
+    out += zpl.slice(last);
+    return { output: out, rows: rows, labels: fmts.length };
+  }
+
+  const api = { bytesToBin: bytesToBin, binToBytes: binToBytes, decodeFH: decodeFH, encodeFH: encodeFH,
+    parsePdfPage: parsePdfPage, extractPdf: extractPdf, processZpl: processZpl };
+  if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.Core = api;
+})(typeof window !== 'undefined' ? window : globalThis);
+
+</script>
+<script>
+(function () {
+  'use strict';
+  var $ = function (id) { return document.getElementById(id); };
+  var S = { zpl: null, pdf: null, blocks: null, notes: [], msg: null, res: null, dl: null, actMsg: '' };
+  var WORKER = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  var STORE = 'itens-etiquetas-ajustes';
+  var STANDALONE = !!window.__STANDALONE__;
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text != null) e.textContent = text;
+    return e;
+  }
+  function clamp(v, a, b) { return Math.min(b, Math.max(a, v)); }
+
+  /* ---------- ajustes (guardados só neste navegador) ---------- */
+  function getOpts() {
+    return {
+      font: +$('o-font').value || 16,
+      showTitle: $('o-title').checked,
+      showAttrs: $('o-attrs').checked,
+      top: clamp(+$('o-top').value || 1140, 1000, 1190),
+      bottom: clamp(+$('o-bottom').value || 1196, 1100, 1400)
+    };
+  }
+  function saveOpts() {
+    try { localStorage.setItem(STORE, JSON.stringify({ font: $('o-font').value, title: $('o-title').checked, attrs: $('o-attrs').checked, top: $('o-top').value, bottom: $('o-bottom').value })); } catch (e) {}
+  }
+  function loadOpts() {
+    try {
+      var j = JSON.parse(localStorage.getItem(STORE) || 'null');
+      if (!j) return;
+      if (j.font) $('o-font').value = j.font;
+      $('o-title').checked = j.title !== false;
+      $('o-attrs').checked = j.attrs !== false;
+      if (j.top) $('o-top').value = j.top;
+      if (j.bottom) $('o-bottom').value = j.bottom;
+    } catch (e) {}
+  }
+
+  /* ---------- entrada de arquivos ---------- */
+  var ZPL_EXT = ['txt', 'zpl', 'prn'];
+  function ext(name) { var p = name.split('.'); return p.length > 1 ? p.pop().toLowerCase() : ''; }
+
+  async function collect(fileList) {
+    var found = { zpl: [], pdf: [], ignored: [] };
+    for (var i = 0; i < fileList.length; i++) {
+      var f = fileList[i], x = ext(f.name);
+      if (x === 'zip') {
+        var zip = await JSZip.loadAsync(await f.arrayBuffer());
+        Object.keys(zip.files).forEach(function (path) {
+          var e = zip.files[path];
+          var base = path.split('/').pop();
+          if (e.dir || /(^|\/)__MACOSX\//.test(path) || base.indexOf('._') === 0) return;
+          var xe = ext(base);
+          var item = { name: base, read: function () { return e.async('uint8array'); } };
+          if (ZPL_EXT.indexOf(xe) >= 0) found.zpl.push(item);
+          else if (xe === 'pdf') found.pdf.push(item);
+          else found.ignored.push(base);
+        });
+      } else {
+        var one = { name: f.name, read: (function (ff) { return async function () { return new Uint8Array(await ff.arrayBuffer()); }; })(f) };
+        if (ZPL_EXT.indexOf(x) >= 0) found.zpl.push(one);
+        else if (x === 'pdf') found.pdf.push(one);
+        else found.ignored.push(f.name);
+      }
+    }
+    return found;
+  }
+
+  async function ingest(fileList) {
+    S.notes = []; S.msg = null; S.actMsg = '';
+    try {
+      var found = await collect(fileList);
+      if (found.zpl.length) {
+        var z = found.zpl[0];
+        S.zpl = { name: z.name, bytes: await z.read() };
+        if (found.zpl.length > 1) S.notes.push('Havia ' + found.zpl.length + ' arquivos de etiqueta; usei ' + z.name + '.');
+      }
+      if (found.pdf.length) {
+        var p = found.pdf[0];
+        S.pdf = { name: p.name, bytes: await p.read() };
+        S.blocks = null;
+        if (found.pdf.length > 1) S.notes.push('Havia ' + found.pdf.length + ' PDFs; usei ' + p.name + '.');
+      }
+      if (found.ignored.length) S.notes.push('Ignorei: ' + found.ignored.join(', ') + '.');
+      if (!found.zpl.length && !found.pdf.length) S.msg = { kind: 'bad', text: 'Não encontrei nenhum .txt de etiqueta nem PDF nesses arquivos.' };
+      if (S.pdf && !S.blocks) {
+        if (!window.pdfjsLib) throw new Error('leitor-pdf');
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = WORKER;
+        S.blocks = await Core.extractPdf(window.pdfjsLib, new Uint8Array(S.pdf.bytes));
+        if (!S.blocks.length) S.msg = { kind: 'bad', text: 'Abri o PDF, mas não achei pedidos nele. Confira se é o Controle.pdf do Mercado Livre.' };
+      }
+    } catch (err) {
+      S.msg = { kind: 'bad', text: err && err.message === 'leitor-pdf'
+        ? 'Não consegui carregar o leitor de PDF. Recarregue a página e tente de novo.'
+        : 'Não consegui ler um dos arquivos. Confira se o .zip não está corrompido e tente de novo.' };
+    }
+    run();
+  }
+
+  function run() {
+    S.res = null;
+    if (S.zpl && S.blocks && S.blocks.length) {
+      try { S.res = Core.processZpl(Core.bytesToBin(S.zpl.bytes), S.blocks, getOpts()); }
+      catch (e) { S.msg = { kind: 'bad', text: 'Erro ao montar as etiquetas: ' + e.message }; }
+    }
+    render();
+  }
+
+  /* ---------- tela ---------- */
+  function lev(a, b) {
+    var m = [], i, j;
+    for (i = 0; i <= a.length; i++) m[i] = [i];
+    for (j = 1; j <= b.length; j++) m[0][j] = j;
+    for (i = 1; i <= a.length; i++) for (j = 1; j <= b.length; j++)
+      m[i][j] = Math.min(m[i - 1][j] + 1, m[i][j - 1] + 1, m[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return m[a.length][b.length];
+  }
+  function norm(s) { return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+  function differentNames(a, b) {
+    a = norm(a); b = norm(b);
+    if (!a || !b) return false;
+    return lev(a, b) / Math.max(a.length, b.length) > 0.3;
+  }
+
+  var STATUS = {
+    ok: ['ok', 'Item adicionado'],
+    ja_tem: ['warn', 'Já tinha item, não mexi'],
+    sem_pdf: ['bad', 'Pedido não está no PDF'],
+    sem_danfe: ['warn', 'Sem DANFE depois da etiqueta'],
+    sem_chave: ['bad', 'Etiqueta sem número de venda ou pacote']
+  };
+
+  function render() {
+    var files = $('files');
+    files.textContent = '';
+    var any = S.zpl || S.pdf;
+    files.hidden = !any;
+    if (S.zpl) { var c1 = el('div', 'chip'); c1.appendChild(el('b', null, 'Etiqueta')); c1.appendChild(el('span', 'mono', S.zpl.name)); files.appendChild(c1); }
+    if (S.pdf) { var c2 = el('div', 'chip'); c2.appendChild(el('b', null, 'Controle')); c2.appendChild(el('span', 'mono', S.pdf.name)); files.appendChild(c2); }
+    if (any) {
+      var clr = el('button', 'btn quiet', 'Limpar');
+      clr.type = 'button';
+      clr.onclick = function () { S.zpl = null; S.pdf = null; S.blocks = null; S.notes = []; S.msg = null; S.res = null; S.actMsg = ''; $('f-in').value = ''; render(); };
+      files.appendChild(clr);
+    }
+
+    var msg = $('msg');
+    var texts = [];
+    var kind = 'warn';
+    if (S.msg) { texts.push(S.msg.text); kind = S.msg.kind; }
+    else if (S.zpl && !S.pdf) { texts.push('Falta o Controle.pdf. Suba o PDF para eu saber qual item vai em cada pedido.'); }
+    else if (S.pdf && !S.zpl) { texts.push('Falta o .txt com as etiquetas. Suba ele para eu escrever os itens.'); }
+    S.notes.forEach(function (n) { texts.push(n); });
+    msg.hidden = !texts.length;
+    msg.className = 'msg ' + (S.msg ? kind : 'warn');
+    msg.textContent = texts.join(' ');
+
+    $('intro').hidden = !!any;
+    var out = $('result');
+    out.textContent = '';
+    if (!S.res) { out.hidden = true; return; }
+    out.hidden = false;
+
+    var rows = S.res.rows;
+    var done = rows.filter(function (r) { return r.status === 'ok'; }).length;
+    var head = el('div', 'result-head');
+    var ttl = el('div');
+    ttl.appendChild(el('h2', null, done + ' de ' + rows.length + ' pedidos com item no DANFE'));
+    ttl.appendChild(el('p', 'muted small', S.res.labels + ' etiquetas no arquivo'));
+    head.appendChild(ttl);
+    var act = el('div', 'actions');
+    if (done) {
+      if (S.dl || STANDALONE) {
+        var b = el('button', 'btn primary', 'Baixar .txt');
+        b.type = 'button'; b.id = 'btn-dl'; b.onclick = download; act.appendChild(b);
+      }
+      var cp = el('button', 'btn', 'Copiar ZPL');
+      cp.type = 'button'; cp.id = 'btn-copy'; cp.onclick = copyZpl; act.appendChild(cp);
+    }
+    head.appendChild(act);
+    out.appendChild(head);
+
+    if (done && !S.dl && !STANDALONE) out.appendChild(el('div', 'msg warn', 'O download direto não está disponível aqui. Use Copiar ZPL e cole num arquivo .txt.'));
+    if (S.actMsg) { var am = el('div', 'msg ok', S.actMsg); am.setAttribute('role', 'status'); out.appendChild(am); }
+    if (done && done < rows.length) out.appendChild(el('div', 'msg warn', 'As etiquetas marcadas em amarelo ou vermelho ficaram como estavam no arquivo original.'));
+
+    var list = el('div', 'orders');
+    rows.forEach(function (r) {
+      var o = el('div', 'order');
+      o.appendChild(el('div', 'n', String(r.n)));
+      o.appendChild(el('div', 'nf', r.nf ? 'NF ' + r.nf : 'sem NF'));
+      var who = el('div', 'who');
+      who.appendChild(el('b', null, r.buyer || '(comprador não encontrado)'));
+      who.appendChild(el('span', 'mono muted small', r.key ? (r.kind === 'pack' ? 'Pacote ' : 'Venda ') + r.key : 'sem número'));
+      if (r.danfeName && r.buyer && differentNames(r.buyer, r.danfeName)) who.appendChild(el('span', 'small muted', 'NF em nome de ' + r.danfeName));
+      o.appendChild(who);
+      var meta = el('div', 'meta');
+      if (r.texts.length) {
+        var strip = el('div', 'strip');
+        r.texts.forEach(function (t) { strip.appendChild(el('div', null, t)); });
+        meta.appendChild(strip);
+      }
+      var st = STATUS[r.status] || ['warn', r.status];
+      meta.appendChild(el('span', 'pill ' + st[0], st[1]));
+      o.appendChild(meta);
+      list.appendChild(o);
+    });
+    out.appendChild(list);
+  }
+
+  /* ---------- saída ---------- */
+  function outName() {
+    var base = S.zpl.name.replace(/\.[^.]+$/, '');
+    return base + ' (com itens).txt';
+  }
+  function blobDownload() {
+    var blob = new Blob([Core.binToBytes(S.res.output)], { type: 'text/plain;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = outName();
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 3000);
+    S.actMsg = 'Arquivo baixado. Procure na pasta Downloads.';
+    render();
+  }
+  async function download() {
+    if (!S.dl && STANDALONE) return blobDownload();
+    S.actMsg = '';
+    try {
+      await S.dl.save({ filename: outName(), data: Core.binToBytes(S.res.output) });
+      S.actMsg = 'Arquivo salvo.';
+    } catch (e) {
+      if (e && e.code === 'declined') S.actMsg = 'Download cancelado.';
+      else { S.actMsg = ''; S.msg = null; }
+      if (!(e && e.code === 'declined')) S.actMsg = 'Não consegui salvar por aqui. Use Copiar ZPL.';
+    }
+    render();
+  }
+  async function copyZpl() {
+    var text = new TextDecoder('utf-8').decode(Core.binToBytes(S.res.output));
+    try { await navigator.clipboard.writeText(text); S.actMsg = 'ZPL copiado. Cole num arquivo .txt e salve como UTF-8.'; }
+    catch (e) {
+      S.actMsg = 'Este navegador não deixou copiar. Selecione o texto manualmente abaixo.';
+      var ta = el('textarea', 'strip'); ta.id = 'ta-zpl'; ta.readOnly = true; ta.rows = 8; ta.style.width = '100%'; ta.value = text;
+      $('result').appendChild(ta); ta.focus(); ta.select();
+    }
+    var old = $('result').querySelector('.msg.ok'); if (old) old.remove();
+    var am = el('div', 'msg ok', S.actMsg); am.setAttribute('role', 'status');
+    $('result').insertBefore(am, $('result').children[1] || null);
+  }
+
+  /* ---------- ligações ---------- */
+  var drop = $('drop');
+  $('f-in').addEventListener('change', function (e) { if (e.target.files.length) ingest(Array.prototype.slice.call(e.target.files)); e.target.value = ''; });
+  ['dragenter', 'dragover'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (n) { drop.addEventListener(n, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { var fl = e.dataTransfer && e.dataTransfer.files; if (fl && fl.length) ingest(Array.prototype.slice.call(fl)); });
+  ['o-font', 'o-top', 'o-bottom', 'o-title', 'o-attrs'].forEach(function (id) {
+    $(id).addEventListener('change', function () { saveOpts(); S.actMsg = ''; run(); });
+  });
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); });
+
+  loadOpts();
+  (async function () {
+    try { S.dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null; } catch (e) { S.dl = null; }
+    render();
+  })();
+})();
+</script>
+
+</body>
+</html>
