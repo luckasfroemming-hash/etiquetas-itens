@@ -320,29 +320,64 @@ details.opts summary { cursor: pointer; font-weight: 600; }
     return null;
   }
 
+  /* quebra o texto em linhas de no máximo cpl caracteres (por palavra); passou de maxLines, corta com "..." */
+  function wrapLines(text, cpl, maxLines) {
+    const words = text.split(/\s+/).filter(Boolean);
+    const lines = []; let cur = '';
+    for (let w of words) {
+      while (w.length > cpl) { // palavra maior que a linha: parte ao meio
+        if (cur) { lines.push(cur); cur = ''; }
+        lines.push(w.slice(0, cpl)); w = w.slice(cpl);
+      }
+      if (!cur) cur = w;
+      else if ((cur + ' ' + w).length <= cpl) cur += ' ' + w;
+      else { lines.push(cur); cur = w; }
+    }
+    if (cur) lines.push(cur);
+    if (lines.length > maxLines) {
+      const keep = lines.slice(0, maxLines);
+      let last = keep[maxLines - 1];
+      if (last.length > cpl - 3) last = last.slice(0, cpl - 3);
+      keep[maxLines - 1] = last.replace(/\s+$/, '') + '...';
+      return keep;
+    }
+    return lines;
+  }
+
+  function wrapSegs(segs, cpl, maxLines) {
+    const lines = []; let cur = '';
+    for (const sg of segs) {
+      if (!cur) cur = sg;
+      else if ((cur + ' | ' + sg).length <= cpl) cur += ' | ' + sg;
+      else { lines.push(cur); cur = sg; }
+    }
+    if (cur) lines.push(cur);
+    const out = [];
+    lines.forEach(function (l) { wrapLines(l, cpl, 99).forEach(function (x) { out.push(x); }); });
+    return out.length > maxLines ? wrapLines(out.join(' '), cpl, maxLines) : out;
+  }
+
+  /* Cada linha vira um campo ^FD simples (sem ^FB): a impressora não preenche nada ao redor
+     e as linhas nunca se sobrepõem. */
   function buildBlock(items, o) {
-    const W = 740, f = o.font, lh = f + 4, cpl = Math.floor(W / (f * 0.6));
+    const f = o.font, lh = f + 4, cpl = Math.floor(740 / (f * 0.6));
     const parts = [];
-    function push(text) {
-      let lines = Math.ceil(text.length / cpl);
-      if (lines > 2) { text = text.slice(0, cpl * 2 - 3) + '...'; lines = 2; }
-      parts.push({ text: text, lines: Math.max(1, lines) });
-    }
     for (const it of items) {
-      let head = 'ITEM: ' + it.sku;
-      if (it.qty != null) head += ' | Qtd: ' + it.qty;
-      if (o.showAttrs) for (const a of it.attrs) head += ' | ' + a;
-      push(head);
-      if (o.showTitle && it.title) push(it.title);
+      const segs = ['ITEM: ' + it.sku];
+      if (it.qty != null) segs.push('Qtd: ' + it.qty);
+      if (o.showAttrs) for (const a of it.attrs) segs.push(a);
+      parts.push(wrapSegs(segs, cpl, 2)); // quebra entre os campos "|", nunca no meio de um deles
+      if (o.showTitle && it.title) parts.push(wrapLines(it.title, cpl, 2));
     }
-    const H = parts.reduce(function (s, p) { return s + p.lines * lh; }, 0);
+    const all = []; parts.forEach(function (p) { p.forEach(function (l) { all.push(l); }); });
+    const H = all.length * lh;
     let y = Math.max(Math.min(o.top, o.bottom - H), 1050);
     const lines = ['^FX ITENS_DO_PEDIDO ^FS'];
-    for (const p of parts) {
-      lines.push('^FO40,' + y + '^A0N,' + f + ',' + f + '^FB' + W + ',2,4,L^FH^FD' + encodeFH(p.text) + '^FS');
-      y += p.lines * lh;
+    for (const t of all) {
+      lines.push('^FO40,' + y + '^A0N,' + f + ',' + f + '^FH^FD' + encodeFH(t) + '^FS');
+      y += lh;
     }
-    return { lines: lines, text: parts.map(function (p) { return p.text; }) };
+    return { lines: lines, text: parts.map(function (p) { return p.join(' '); }) };
   }
 
   function processZpl(zpl, pdfBlocks, opts) {
