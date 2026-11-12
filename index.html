@@ -268,16 +268,16 @@ details.opts summary { cursor: pointer; font-weight: 600; }
     const split = skuItem.x - 25;
     const left = groupLines(rawItems.filter(function (i) { return i.x < split; }), 1.8);
     const right = groupLines(rawItems.filter(function (i) { return i.x >= split; }), 1.8);
-    const isMeta = function (t) { return /^(Pack ID|Venda):/i.test(t); };
+    const isMeta = function (t) { return /^(Pack ID|Venda|Envio):/i.test(t); };
     const blocks = [];
     for (let i = 0; i < left.length; i++) {
       const t = left[i].text;
       if (isMeta(t) || !(i + 1 < left.length && isMeta(left[i + 1].text))) continue;
-      const b = { id: t, y: left[i].y, pack: null, vendas: [], name: '', items: [] };
+      const b = { id: t, y: left[i].y, pack: null, vendas: [], envios: [], name: '', items: [] };
       let j = i + 1;
       while (j < left.length && isMeta(left[j].text)) {
-        const m = left[j].text.match(/^(Pack ID|Venda):\s*(\d+)/i);
-        if (m) { if (/pack/i.test(m[1])) b.pack = m[2]; else b.vendas.push(m[2]); }
+        const m = left[j].text.match(/^(Pack ID|Venda|Envio):\s*(\d+)/i);
+        if (m) { if (/pack/i.test(m[1])) b.pack = m[2]; else if (/envio/i.test(m[1])) b.envios.push(m[2]); else b.vendas.push(m[2]); }
         j++;
       }
       if (j < left.length && !(j + 1 < left.length && isMeta(left[j + 1].text))) b.name = left[j].text;
@@ -314,8 +314,10 @@ details.opts summary { cursor: pointer; font-weight: 600; }
 
   function mlKey(f) { // Venda ou Pack ID impressos na etiqueta do ML
     const m = f.match(/\^FD(Venda|Pack ID):\s*(\d+)\^FS([^\n]*\n\s*\^FO[^\n]*?\^FD(\d+)\^FS)?/);
-    if (!m) return null;
-    return { kind: /pack/i.test(m[1]) ? 'pack' : 'venda', key: m[2] + (m[4] || '') };
+    if (m) return { kind: /pack/i.test(m[1]) ? 'pack' : 'venda', key: m[2] + (m[4] || '') };
+    const e = f.match(/Shipment_Number_Bar_Code[\s\S]*?\^FD>:(\d+)\^FS/) || f.match(/"id":"(\d+)"/);
+    if (e) return { kind: 'envio', key: e[1] };
+    return null;
   }
 
   function buildBlock(items, o) {
@@ -364,7 +366,7 @@ details.opts summary { cursor: pointer; font-weight: 600; }
         if (dn) row.danfeName = decodeFH(dn[1]).trim();
       }
       let found = [];
-      if (k) found = pdfBlocks.filter(function (b) { return k.kind === 'pack' ? b.pack === k.key : b.vendas.indexOf(k.key) >= 0; });
+      if (k) found = pdfBlocks.filter(function (b) { return k.kind === 'pack' ? b.pack === k.key : k.kind === 'envio' ? b.envios.indexOf(k.key) >= 0 : b.vendas.indexOf(k.key) >= 0; });
       row.buyer = found.length ? found[0].name : '';
       for (const b of found) row.items.push.apply(row.items, b.items);
       if (!k) row.status = 'sem_chave';
